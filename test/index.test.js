@@ -104,5 +104,11 @@ describe("babel-plugin-jsm-to-common-js", () => {
         "var i = 2 + 3; module.exports = {i};"
       );
     });
+    it("should move module.exports to the bottom", () => {
+      assert.equalIgnoreSpaces(
+        transform("this.EXPORTED_SYMBOLS = ['i']; this.i = 1"),
+        "var i = 1; module.exports = {i};"
+      );
+    });
   });
 });

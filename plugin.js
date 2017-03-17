@@ -14,6 +14,7 @@ const DEFAULT_OPTIONS = {
 
 module.exports = function plugin(babel) {
   const t = babel.types;
+  let exportItems;
 
   // module.exports = {foo, bar, baz};
   function createModuleExports(exportedIdentifiers) {
@@ -36,8 +37,10 @@ module.exports = function plugin(babel) {
         const left = path.node.expression.left.property
         const right = path.node.expression.right;
         if (left.name === "EXPORTED_SYMBOLS") {
-          const names = right.elements.map(el => el.value);
-          path.replaceWith(createModuleExports(names));
+          // const names = right.elements.map(el => el.value);
+          // path.replaceWith(createModuleExports(names));
+          exportItems = right.elements.map(el => el.value);
+          path.remove();
         } else {
           const decl = t.variableDeclaration("var", [t.variableDeclarator(left, right)]);
           if (left.name === right.name) {
@@ -162,6 +165,9 @@ module.exports = function plugin(babel) {
         const utils = checkForUtilsDeclarations(topLevelNodes, ids);
         replaceImports(topLevelNodes, ids, utils, opts.basePath, opts.replace);
         replaceExports(topLevelNodes);
+        if (exportItems) {
+          path.pushContainer('body', createModuleExports(exportItems));
+        }
       }
     }
   }
