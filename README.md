@@ -1,4 +1,4 @@
-# JSM to ES Module Babel Plugin
+# JSM to ES Module Common JS
 
 [![Build Status](https://travis-ci.org/k88hudson/babel-plugin-jsm-to-commonjs.svg?branch=master)](https://travis-ci.org/k88hudson/babel-plugin-jsm-to-commonjs)
 
