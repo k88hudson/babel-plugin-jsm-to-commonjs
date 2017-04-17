@@ -11,7 +11,7 @@ function testFile(fileName) {
   const sourceFile = path.join(__dirname, "./fixtures/source", fileName);
   const actual = babel.transformFileSync(sourceFile, {plugins: [plugin]}).code + "\n";
   const expected = fs.readFileSync(path.join(__dirname, "./fixtures/expected", fileName), {encoding: "utf8"});
-  // console.log(`${fileName}\n--------------------------\n${actual}\n--------------------------`);
+  //console.log(`${fileName}\n--------------------------\n${actual}\n--------------------------`);
   assert.equal(actual, expected);
 }
 
@@ -71,6 +71,24 @@ describe("babel-plugin-jsm-to-common-js", () => {
       const actual = babel.transform(text, {plugins: [[plugin, {basePath: "resource://as/", replace: true}]]}).code;
       const expected = "const {foo} = require('foo.jsm');";
       assert.equalIgnoreSpaces(actual, expected);
+    });
+    describe("XPCOMUtils.defineLazyModuleGetter", () => {
+      it("should convert XPCOMUtils.defineLazyModuleGetter", () => {
+        const actual = transform("XPCOMUtils.defineLazyModuleGetter(this, 'Foo', 'resource://as/Foo.jsm');");
+        const expected = "var {Foo} = require('resource://as/Foo.jsm');";
+        assert.equalIgnoreSpaces(actual, expected);
+      });
+      it("should replace the resource base if opts.replace is true", () => {
+        const text = "XPCOMUtils.defineLazyModuleGetter(this, 'Foo', 'resource://as/Foo.jsm');";
+        const actual = babel.transform(text, {plugins: [[plugin, {basePath: /^resource:\/\/as\//, replace: true}]]}).code;
+        const expected = "var {Foo} = require('Foo.jsm');";
+        assert.equalIgnoreSpaces(actual, expected);
+      });
+      it("should not replace XPCOM... that do not match the basePath", () => {
+        const text = "XPCOMUtils.defineLazyModuleGetter(this, 'Foo', 'module://Foo.jsm');";
+        const actual = babel.transform(text, {plugins: [[plugin, {basePath: /^resource:\/\/as\//}]]}).code;
+        assert.equalIgnoreSpaces(actual, text);
+      });
     });
   });
   describe("exports", () => {

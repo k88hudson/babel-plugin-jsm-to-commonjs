@@ -9,3 +9,7 @@ const { awe } = require("resource://stuff");
 
 const { baz } = Components.utils.flimport("resource://stuff", {});
 const { qux } = Components.u.import("resource://stuff", {});
+
+var {
+  PreviewProvider
+} = require("resource:///modules/PreviewProvider.jsm");

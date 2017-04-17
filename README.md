@@ -2,13 +2,15 @@
 
 [![Build Status](https://travis-ci.org/k88hudson/babel-plugin-jsm-to-commonjs.svg?branch=master)](https://travis-ci.org/k88hudson/babel-plugin-jsm-to-commonjs)
 
-This module converts import and export statements in `.jsm` modules to commonjs modules. For example:
+This module converts import and export statements with `Components.utils.import` and `XPCOMUtils.defineLazyModuleGetter` in `.jsm` modules to commonjs modules. For example:
 
 Source:
 
 ```js
 const {utils: Cu} = Components;
 const {Bar, Baz} = Cu.import("resource://activity-stream/addon/barbaz.jsm", {});
+
+XPCOMUtils.defineLazyModuleGetter("Foo", "resource://activity-stream/addon/Foo.jsm")
 
 this.Stuff = {};
 this.Whatever = {};
@@ -19,7 +21,8 @@ this.EXPORTED_SYMBOLS = ["Stuff", "Whatever"];
 Compiles to:
 
 ```js
-const {Bar, Baz} = require("addon/barbaz.js");
+const {Bar, Baz} = require("addon/barbaz.jsm");
+const {Foo} = require("addon/Foo.jsm")
 
 var Stuff = {};
 var Whatever = {};

@@ -156,6 +156,29 @@ module.exports = function plugin(babel) {
 
   }
 
+  function replaceXPCOM(paths, basePath, replacePath) {
+    paths.forEach(path => {
+      if (
+        path.isExpressionStatement() &&
+        path.get("expression").isCallExpression() &&
+        path.get("expression.callee.object.name").node === "XPCOMUtils" &&
+        path.get("expression.callee.property.name").node === "defineLazyModuleGetter"
+      ) {
+        const argPaths = path.get("expression.arguments");
+        const idName = argPaths[1].node.value;
+        let filePath = argPaths[2].node.value;
+
+        if (!filePath.match(basePath)) return;
+
+        if (replacePath) filePath = filePath.replace(basePath, "");
+        const requireStatement = t.callExpression(t.identifier("require"), [t.stringLiteral(filePath)]);
+        const varDecl = t.variableDeclaration("var", [t.variableDeclarator(t.objectPattern([t.objectProperty(t.identifier(idName), t.identifier(idName), false, true  )]), requireStatement)]);
+        path.replaceWith(varDecl);
+
+      }
+    });
+  }
+
   return {
     visitor: {
       Program(path, state) {
@@ -164,6 +187,7 @@ module.exports = function plugin(babel) {
         const ids = checkForDeclarations(topLevelNodes, "Components", ["Components"]);
         const utils = checkForUtilsDeclarations(topLevelNodes, ids);
         replaceImports(topLevelNodes, ids, utils, opts.basePath, opts.replace);
+        replaceXPCOM(topLevelNodes, opts.basePath, opts.replace);
         replaceExports(topLevelNodes);
         if (exportItems) {
           path.pushContainer('body', createModuleExports(exportItems));

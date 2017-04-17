@@ -9,3 +9,5 @@ const {awe} = utils.import("resource://stuff", {});
 
 const {baz} = Components.utils.flimport("resource://stuff", {});
 const {qux} = Components.u.import("resource://stuff", {});
+
+XPCOMUtils.defineLazyModuleGetter(this, "PreviewProvider", "resource:///modules/PreviewProvider.jsm");
