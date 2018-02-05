@@ -30,6 +30,12 @@ describe("babel-plugin-jsm-to-common-js", () => {
         "const {foo} = require('resource://foo.jsm');"
       );
     });
+    it("should convert ChomeUtils.import", () => {
+      assert.equalIgnoreSpaces(
+        transform("const {foo} = ChromeUtils.import('resource://foo.jsm', {})"),
+        "const {foo} = require('resource://foo.jsm');"
+      );
+    });
     it("should work with references of Components", () => {
       assert.equalIgnoreSpaces(
         transform("const C = Components; const {foo} = C.utils.import('resource://foo.jsm', {});"),
@@ -88,6 +94,13 @@ describe("babel-plugin-jsm-to-common-js", () => {
         const text = "XPCOMUtils.defineLazyModuleGetter(this, 'Foo', 'module://Foo.jsm');";
         const actual = babel.transform(text, {plugins: [[plugin, {basePath: /^resource:\/\/as\//}]]}).code;
         assert.equalIgnoreSpaces(actual, text);
+      });
+    });
+    describe("ChromeUtils.defineModuleGetter", () => {
+      it("should convert ChromeUtils.defineModuleGetter", () => {
+        const actual = transform("ChromeUtils.defineModuleGetter(this, 'Foo', 'resource://as/Foo.jsm');");
+        const expected = "var {Foo} = require('resource://as/Foo.jsm');";
+        assert.equalIgnoreSpaces(actual, expected);
       });
     });
   });

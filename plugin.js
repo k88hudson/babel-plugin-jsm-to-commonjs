@@ -128,7 +128,7 @@ module.exports = function plugin(babel) {
             path.node.arguments[0].value.match(basePath) &&
             t.isObjectPattern(path.parentPath.node.id) &&
 
-            //Check if actually Components.utils.import
+            // Check if actually Components.utils.import
             path.get("callee").isMemberExpression() &&
             path.get("callee.property").node.name === "import"
           ) {
@@ -141,7 +141,8 @@ module.exports = function plugin(babel) {
                 return;
               }
             } else {
-              if (!CuNames.includes(callee.get("object").node.name)) {
+              const objectName = callee.get("object").node.name;
+              if (objectName !== "ChromeUtils" && !CuNames.includes(objectName)) {
                 return;
               }
             }
@@ -156,13 +157,13 @@ module.exports = function plugin(babel) {
 
   }
 
-  function replaceXPCOM(paths, basePath, replacePath) {
+  function replaceModuleGetters(paths, basePath, replacePath) {
     paths.forEach(path => {
       if (
         path.isExpressionStatement() &&
         path.get("expression").isCallExpression() &&
-        path.get("expression.callee.object.name").node === "XPCOMUtils" &&
-        path.get("expression.callee.property.name").node === "defineLazyModuleGetter"
+       ["XPCOMUtils", "ChromeUtils"].includes(path.get("expression.callee.object.name").node) &&
+       ["defineLazyModuleGetter", "defineModuleGetter"].includes(path.get("expression.callee.property.name").node)
       ) {
         const argPaths = path.get("expression.arguments");
         const idName = argPaths[1].node.value;
@@ -187,7 +188,7 @@ module.exports = function plugin(babel) {
         const ids = checkForDeclarations(topLevelNodes, "Components", ["Components"]);
         const utils = checkForUtilsDeclarations(topLevelNodes, ids);
         replaceImports(topLevelNodes, ids, utils, opts.basePath, opts.replace);
-        replaceXPCOM(topLevelNodes, opts.basePath, opts.replace);
+        replaceModuleGetters(topLevelNodes, opts.basePath, opts.replace);
         replaceExports(topLevelNodes);
         if (exportItems) {
           path.pushContainer('body', createModuleExports(exportItems));
