@@ -29,6 +29,13 @@ module.exports = function plugin(babel) {
   function replaceExports(nodes) {
     nodes.forEach(path => {
       if (
+        path.isVariableDeclaration() &&
+        path.get("declarations")[0] &&
+        path.get("declarations")[0].node.id.name === "EXPORTED_SYMBOLS"
+      ) {
+        exportItems = path.get("declarations")[0].get("init.elements").map(e => e.node.value);
+        path.remove();
+      } else if (
         path.isExpressionStatement() &&
         path.get("expression").isAssignmentExpression() &&
         path.get("expression.left.object").isThisExpression() &&

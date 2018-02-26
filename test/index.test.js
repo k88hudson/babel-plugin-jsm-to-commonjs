@@ -108,36 +108,39 @@ describe("babel-plugin-jsm-to-common-js", () => {
     it("should work", () => {
       testFile("export.js");
     });
-    it("should convert EXPORTED_SYMBOLS", () => {
+    it("should convert this.EXPORTED_SYMBOLS", () => {
       assert.equalIgnoreSpaces(transform("this.EXPORTED_SYMBOLS = ['a', 'b'];"), "module.exports = {a, b};");
+    });
+    it("should convert var EXPORTED_SYMBOLS", () => {
+      assert.equalIgnoreSpaces(transform("var EXPORTED_SYMBOLS = ['a', 'b'];"), "module.exports = {a, b};");
     });
     it("should convert exported variables of the same name", () => {
       assert.equalIgnoreSpaces(
-        transform("const i = 0; this.i = i; this.EXPORTED_SYMBOLS = ['i']"),
+        transform("const i = 0; this.i = i; var EXPORTED_SYMBOLS = ['i']"),
         "const i = 0; module.exports = {i};"
       );
     });
     it("should convert exported variables of a different name", () => {
       assert.equalIgnoreSpaces(
-        transform("this.i = x; this.EXPORTED_SYMBOLS = ['i']"),
+        transform("this.i = x; var EXPORTED_SYMBOLS = ['i']"),
         "var i = x; module.exports = {i};"
       );
     });
     it("should convert exported functions", () => {
       assert.equalIgnoreSpaces(
-        transform("this.i = function i() {}; this.EXPORTED_SYMBOLS = ['i']"),
+        transform("this.i = function i() {}; var EXPORTED_SYMBOLS = ['i']"),
         "var i = function i() {}; module.exports = {i};"
       );
     });
     it("should convert exported expressions", () => {
       assert.equalIgnoreSpaces(
-        transform("this.i = 2 + 3; this.EXPORTED_SYMBOLS = ['i']"),
+        transform("this.i = 2 + 3; var EXPORTED_SYMBOLS = ['i']"),
         "var i = 2 + 3; module.exports = {i};"
       );
     });
     it("should move module.exports to the bottom", () => {
       assert.equalIgnoreSpaces(
-        transform("this.EXPORTED_SYMBOLS = ['i']; this.i = 1"),
+        transform("var EXPORTED_SYMBOLS = ['i']; this.i = 1"),
         "var i = 1; module.exports = {i};"
       );
     });
