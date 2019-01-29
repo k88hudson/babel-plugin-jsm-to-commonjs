@@ -125,14 +125,14 @@ module.exports = function plugin(babel) {
     return results;
   }
 
-  function replaceImports(nodes, ComponentNames, CuNames, basePath, replacePath) {
+  function replaceImports(nodes, ComponentNames, CuNames, basePath, replacePath, removeOtherImports) {
     nodes.forEach(p => {
       if (!p.isVariableDeclaration()) return;
       p.traverse({
         CallExpression(path) {
           if (
             t.isStringLiteral(path.node.arguments[0]) &&
-            path.node.arguments[0].value.match(basePath) &&
+            // path.node.arguments[0].value.match(basePath) &&
             t.isObjectPattern(path.parentPath.node.id) &&
 
             // Check if actually Components.utils.import
@@ -154,9 +154,14 @@ module.exports = function plugin(babel) {
               }
             }
             let filePath = path.node.arguments[0].value;
-            if (replacePath) filePath = filePath.replace(basePath, "");
-            const requireStatement = t.callExpression(t.identifier("require"), [t.stringLiteral(filePath)]);
-            path.replaceWith(requireStatement);
+
+            if (!removeOtherImports || (replacePath && filePath.match(basePath))) {
+              if (replacePath) filePath = filePath.replace(basePath, "");
+              const requireStatement = t.callExpression(t.identifier("require"), [t.stringLiteral(filePath)]);
+              path.replaceWith(requireStatement);
+            } else if (removeOtherImports) {
+              path.parentPath.parentPath.remove();
+            }
           }
         }
       });
@@ -194,7 +199,7 @@ module.exports = function plugin(babel) {
         const topLevelNodes = path.get("body");
         const ids = checkForDeclarations(topLevelNodes, "Components", ["Components"]);
         const utils = checkForUtilsDeclarations(topLevelNodes, ids);
-        replaceImports(topLevelNodes, ids, utils, opts.basePath, opts.replace);
+        replaceImports(topLevelNodes, ids, utils, opts.basePath, opts.replace, opts.removeOtherImports);
         replaceModuleGetters(topLevelNodes, opts.basePath, opts.replace);
         replaceExports(topLevelNodes);
         if (exportItems) {

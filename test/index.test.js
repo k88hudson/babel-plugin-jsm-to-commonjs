@@ -72,6 +72,24 @@ describe("babel-plugin-jsm-to-common-js", () => {
       const expected = "const {foo} = require('foo.jsm');";
       assert.equalIgnoreSpaces(actual, expected);
     });
+    it("should remove declarations if opts.removeOtherImports is true", () => {
+      const text = "const {foo} = ChromeUtils.import('resource://foo.jsm'); const bar = 1;"
+      const actual = babel.transform(text, {plugins: [[plugin, {removeOtherImports: true}]]}).code;
+      assert.equal(
+        actual,
+        "const bar = 1;"
+      );
+    });
+    it("should not remove declarations that match the basePath if opts.replace and opts.removeOtherImports is true", () => {
+      const text = `const {lol} = ChromeUtils.import('resource://as/lol.jsm');
+       const {foo} = ChromeUtils.import('resource://foo.jsm');
+       const bar = 1;`;
+      const actual = babel.transform(text, {plugins: [[plugin, {removeOtherImports: true, basePath: "resource://as/", replace: true}]]}).code;
+      assert.equal(
+        actual,
+        "const { lol } = require('lol.jsm');\n\nconst bar = 1;"
+      );
+    });
     it("should work with a string for the basePath option", () => {
       const text = "const {foo} = Components.utils.import('resource://as/foo.jsm', {})";
       const actual = babel.transform(text, {plugins: [[plugin, {basePath: "resource://as/", replace: true}]]}).code;
